@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis tareas</title>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --card: #ffffff;
+      --text: #1f2328;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --danger: #dc2626;
+      --done: #9ca3af;
+      --vencida: #b91c1c;
+      --vencida-fondo: #fef2f2;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111317;
+        --card: #1b1e24;
+        --text: #e6e8eb;
+        --muted: #9aa1ab;
+        --border: #2c313a;
+        --accent: #3b82f6;
+        --accent-hover: #60a5fa;
+        --danger: #f87171;
+        --done: #6b7280;
+        --vencida: #fca5a5;
+        --vencida-fondo: #2a1a1d;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      display: flex;
+      justify-content: center;
+      padding: 48px 16px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    .resumen {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    input[type="text"] {
+      flex: 1 1 200px;
+      min-width: 0;
+      padding: 12px 14px;
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    #fecha-nueva {
+      padding: 0 10px;
+      min-height: 46px;
+      font: inherit;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input[type="text"]:focus,
+    #fecha-nueva:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+    }
+
+    button.anadir {
+      padding: 0 18px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button.anadir:hover { background: var(--accent-hover); }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    ul:empty { display: none; }
+
+    li {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    li:last-child { border-bottom: none; }
+
+    li input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    li label {
+      flex: 1 1 140px;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      cursor: pointer;
+    }
+
+    li.hecha label {
+      color: var(--done);
+      text-decoration: line-through;
+    }
+
+    li.vencida {
+      background: var(--vencida-fondo);
+      box-shadow: inset 3px 0 0 var(--vencida);
+    }
+
+    .aviso-vencida {
+      flex-shrink: 0;
+      padding: 1px 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--vencida);
+      border: 1px solid var(--vencida);
+      border-radius: 999px;
+    }
+
+    input.fecha {
+      flex-shrink: 0;
+      min-width: 130px;
+      padding: 4px 6px;
+      font: inherit;
+      font-size: 0.85rem;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: opacity 0.15s, border-color 0.15s;
+    }
+
+    li.vencida input.fecha { color: var(--vencida); }
+
+    /* Discreto sin bajar la opacidad, que dejaría el texto sin contraste suficiente. */
+    input.fecha.vacia { border-style: dashed; }
+
+    input.fecha:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
+
+    button.borrar {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      font-size: 1.1rem;
+      line-height: 1;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+    }
+
+    li:hover button.borrar,
+    button.borrar:focus-visible { opacity: 1; }
+
+    button.borrar:hover {
+      color: var(--danger);
+      background: color-mix(in srgb, var(--danger) 12%, transparent);
+    }
+
+    .filtros {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .filtros[hidden] { display: none; }
+
+    .filtros button {
+      padding: 6px 14px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .filtros button:hover { color: var(--text); }
+
+    .filtros button[aria-pressed="true"] {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .vacio {
+      text-align: center;
+      color: var(--muted);
+      padding: 32px 0;
+    }
+
+    .vacio[hidden] { display: none; }
+
+    .pie {
+      margin-top: 32px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Mis tareas</h1>
+    <p class="resumen" id="resumen"></p>
+
+    <form id="formulario">
+      <input type="text" id="nueva" placeholder="¿Qué tienes que hacer?" aria-label="Nueva tarea" autocomplete="off" required>
+      <input type="date" id="fecha-nueva" aria-label="Fecha límite (opcional)">
+      <button type="submit" class="anadir">Añadir</button>
+    </form>
+
+    <div class="filtros" id="filtros" role="group" aria-label="Filtrar tareas">
+      <button type="button" data-filtro="todas" aria-pressed="true">Todas</button>
+      <button type="button" data-filtro="pendientes" aria-pressed="false">Pendientes</button>
+      <button type="button" data-filtro="hechas" aria-pressed="false">Hechas</button>
+    </div>
+
+    <ul id="lista"></ul>
+    <p class="vacio" id="vacio">No hay tareas. ¡Añade la primera!</p>
+
+    <footer class="pie">Hecho con Claude Code</footer>
+  </main>
+
+  <script>
+    const CLAVE = 'mis-tareas';
+    const formulario = document.getElementById('formulario');
+    const entrada = document.getElementById('nueva');
+    const fechaNueva = document.getElementById('fecha-nueva');
+    const lista = document.getElementById('lista');
+    const vacio = document.getElementById('vacio');
+    const resumen = document.getElementById('resumen');
+    const filtros = document.getElementById('filtros');
+
+    const FILTROS = {
+      todas: () => true,
+      pendientes: t => !t.hecha,
+      hechas: t => t.hecha,
+    };
+
+    let tareas = cargar();
+    let filtro = 'todas';
+
+    function cargar() {
+      try {
+        const datos = JSON.parse(localStorage.getItem(CLAVE));
+        return Array.isArray(datos) ? datos : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function guardar() {
+      try {
+        localStorage.setItem(CLAVE, JSON.stringify(tareas));
+      } catch {
+        // Sin almacenamiento disponible: la lista funciona solo durante la sesión.
+      }
+    }
+
+    // Fecha local de hoy como AAAA-MM-DD (toISOString daría la fecha en UTC).
+    function hoy() {
+      const d = new Date();
+      return d.getFullYear() + '-' +
+        String(d.getMonth() + 1).padStart(2, '0') + '-' +
+        String(d.getDate()).padStart(2, '0');
+    }
+
+    // Las fechas AAAA-MM-DD se ordenan igual como texto que cronológicamente.
+    function estaVencida(tarea) {
+      return Boolean(!tarea.hecha && tarea.fecha && tarea.fecha < hoy());
+    }
+
+    function render() {
+      lista.innerHTML = '';
+
+      const visibles = tareas.filter(FILTROS[filtro]);
+
+      for (const tarea of visibles) {
+        const li = document.createElement('li');
+        li.dataset.id = tarea.id;
+        li.classList.toggle('hecha', tarea.hecha);
+        const vencida = estaVencida(tarea);
+        li.classList.toggle('vencida', vencida);
+
+        const casilla = document.createElement('input');
+        casilla.type = 'checkbox';
+        casilla.id = 'tarea-' + tarea.id;
+        casilla.checked = tarea.hecha;
+        casilla.addEventListener('change', () => alternar(tarea.id));
+
+        const etiqueta = document.createElement('label');
+        etiqueta.htmlFor = casilla.id;
+        etiqueta.textContent = tarea.texto;
+
+        const fecha = document.createElement('input');
+        fecha.type = 'date';
+        fecha.className = 'fecha';
+        fecha.value = tarea.fecha || '';
+        fecha.classList.toggle('vacia', !fecha.value);
+        fecha.setAttribute('aria-label', 'Fecha límite de «' + tarea.texto + '»');
+        // Se confirma al salir o con Enter: Chrome lanza 'change' en cuanto la fecha es válida
+        // (al primer dígito del año) y el render() cortaría la escritura con teclado.
+        // El render() reemplaza los controles: se devuelve el foco al control de la lista
+        // al que iba (al salir) o al propio control de fecha (con Enter).
+        const confirmarFecha = (e) => {
+          if ((fecha.value || null) === (tarea.fecha || null)) return;
+          const destino = e && (e.type === 'keydown' ? fecha : e.relatedTarget);
+          const filaDestino = destino && lista.contains(destino) ? destino.closest('li') : null;
+          const posicion = filaDestino ? [...filaDestino.querySelectorAll('input, button')].indexOf(destino) : -1;
+          cambiarFecha(tarea.id, fecha.value);
+          if (filaDestino) {
+            const fila = lista.querySelector('li[data-id="' + CSS.escape(filaDestino.dataset.id) + '"]');
+            const control = fila && fila.querySelectorAll('input, button')[posicion];
+            if (control) control.focus();
+          }
+        };
+        fecha.addEventListener('change', () => {
+          if (document.activeElement !== fecha) confirmarFecha();
+        });
+        fecha.addEventListener('blur', confirmarFecha);
+        fecha.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') confirmarFecha(e);
+        });
+
+        const borrar = document.createElement('button');
+        borrar.className = 'borrar';
+        borrar.type = 'button';
+        borrar.textContent = '✕';
+        borrar.title = 'Borrar tarea';
+        borrar.setAttribute('aria-label', 'Borrar «' + tarea.texto + '»');
+        borrar.addEventListener('click', () => eliminar(tarea.id));
+
+        li.append(casilla, etiqueta);
+        if (vencida) {
+          const aviso = document.createElement('span');
+          aviso.className = 'aviso-vencida';
+          aviso.id = 'aviso-' + tarea.id;
+          aviso.textContent = 'Vencida';
+          // Para que se anuncie también al llegar con Tab, no solo en modo lectura.
+          casilla.setAttribute('aria-describedby', aviso.id);
+          fecha.setAttribute('aria-describedby', aviso.id);
+          li.append(aviso);
+        }
+        li.append(fecha, borrar);
+        lista.appendChild(li);
+      }
+
+      const total = tareas.length;
+      const pendientes = tareas.filter(t => !t.hecha).length;
+      vacio.hidden = visibles.length > 0;
+      vacio.textContent = total === 0
+        ? 'No hay tareas. ¡Añade la primera!'
+        : `No hay tareas ${filtro}.`;
+
+      filtros.hidden = total === 0;
+      for (const boton of filtros.querySelectorAll('button[data-filtro]')) {
+        boton.setAttribute('aria-pressed', String(boton.dataset.filtro === filtro));
+      }
+
+      resumen.textContent = total === 0
+        ? 'Tu lista está vacía'
+        : `${pendientes} pendiente${pendientes === 1 ? '' : 's'} de ${total}`;
+    }
+
+    function anadir(texto, fecha) {
+      tareas.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), texto, hecha: false, fecha: fecha || null });
+      guardar();
+      render();
+    }
+
+    function cambiarFecha(id, valor) {
+      const tarea = tareas.find(t => t.id === id);
+      if (tarea) tarea.fecha = valor || null;
+      guardar();
+      render();
+    }
+
+    function alternar(id) {
+      const tarea = tareas.find(t => t.id === id);
+      if (tarea) tarea.hecha = !tarea.hecha;
+      guardar();
+      render();
+    }
+
+    function eliminar(id) {
+      tareas = tareas.filter(t => t.id !== id);
+      guardar();
+      render();
+    }
+
+    formulario.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const texto = entrada.value.trim();
+      if (!texto) return;
+      anadir(texto, fechaNueva.value);
+      entrada.value = '';
+      fechaNueva.value = '';
+      entrada.focus();
+    });
+
+    filtros.addEventListener('click', (e) => {
+      const boton = e.target.closest('button[data-filtro]');
+      if (!boton) return;
+      filtro = boton.dataset.filtro;
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>

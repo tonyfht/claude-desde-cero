@@ -1,0 +1,5 @@
+# Carpeta de trabajo local usada para las capturas de la guía
+demo/
+node_modules/
+.DS_Store
+Thumbs.db

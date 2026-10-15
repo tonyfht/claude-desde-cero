@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mis tareas</title>
+  <style>
+    :root {
+      --bg: #f4f5f7;
+      --card: #ffffff;
+      --text: #1f2328;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --danger: #dc2626;
+      --done: #9ca3af;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111317;
+        --card: #1b1e24;
+        --text: #e6e8eb;
+        --muted: #9aa1ab;
+        --border: #2c313a;
+        --accent: #3b82f6;
+        --accent-hover: #60a5fa;
+        --danger: #f87171;
+        --done: #6b7280;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      display: flex;
+      justify-content: center;
+      padding: 48px 16px;
+    }
+
+    main {
+      width: 100%;
+      max-width: 520px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    .resumen {
+      margin: 0 0 24px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 14px;
+      font-size: 1rem;
+      color: var(--text);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+    }
+
+    button.anadir {
+      padding: 0 18px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button.anadir:hover { background: var(--accent-hover); }
+
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    ul:empty { display: none; }
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    li:last-child { border-bottom: none; }
+
+    li input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    li label {
+      flex: 1;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      cursor: pointer;
+    }
+
+    li.hecha label {
+      color: var(--done);
+      text-decoration: line-through;
+    }
+
+    button.borrar {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      font-size: 1.1rem;
+      line-height: 1;
+      color: var(--muted);
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      opacity: 0.6;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+    }
+
+    li:hover button.borrar,
+    button.borrar:focus-visible { opacity: 1; }
+
+    button.borrar:hover {
+      color: var(--danger);
+      background: color-mix(in srgb, var(--danger) 12%, transparent);
+    }
+
+    .filtros {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .filtros[hidden] { display: none; }
+
+    .filtros button {
+      padding: 6px 14px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .filtros button:hover { color: var(--text); }
+
+    .filtros button[aria-pressed="true"] {
+      color: #fff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .vacio {
+      text-align: center;
+      color: var(--muted);
+      padding: 32px 0;
+    }
+
+    .vacio[hidden] { display: none; }
+
+    .pie {
+      margin-top: 32px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Mis tareas</h1>
+    <p class="resumen" id="resumen"></p>
+
+    <form id="formulario">
+      <input type="text" id="nueva" placeholder="¿Qué tienes que hacer?" aria-label="Nueva tarea" autocomplete="off" required>
+      <button type="submit" class="anadir">Añadir</button>
+    </form>
+
+    <div class="filtros" id="filtros" role="group" aria-label="Filtrar tareas">
+      <button type="button" data-filtro="todas" aria-pressed="true">Todas</button>
+      <button type="button" data-filtro="pendientes" aria-pressed="false">Pendientes</button>
+      <button type="button" data-filtro="hechas" aria-pressed="false">Hechas</button>
+    </div>
+
+    <ul id="lista"></ul>
+    <p class="vacio" id="vacio">No hay tareas. ¡Añade la primera!</p>
+
+    <footer class="pie">Hecho con Claude Code</footer>
+  </main>
+
+  <script>
+    const CLAVE = 'mis-tareas';
+    const formulario = document.getElementById('formulario');
+    const entrada = document.getElementById('nueva');
+    const lista = document.getElementById('lista');
+    const vacio = document.getElementById('vacio');
+    const resumen = document.getElementById('resumen');
+    const filtros = document.getElementById('filtros');
+
+    const FILTROS = {
+      todas: () => true,
+      pendientes: t => !t.hecha,
+      hechas: t => t.hecha,
+    };
+
+    let tareas = cargar();
+    let filtro = 'todas';
+
+    function cargar() {
+      try {
+        const datos = JSON.parse(localStorage.getItem(CLAVE));
+        return Array.isArray(datos) ? datos : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function guardar() {
+      try {
+        localStorage.setItem(CLAVE, JSON.stringify(tareas));
+      } catch {
+        // Sin almacenamiento disponible: la lista funciona solo durante la sesión.
+      }
+    }
+
+    function render() {
+      lista.innerHTML = '';
+
+      const visibles = tareas.filter(FILTROS[filtro]);
+
+      for (const tarea of visibles) {
+        const li = document.createElement('li');
+        li.classList.toggle('hecha', tarea.hecha);
+
+        const casilla = document.createElement('input');
+        casilla.type = 'checkbox';
+        casilla.id = 'tarea-' + tarea.id;
+        casilla.checked = tarea.hecha;
+        casilla.addEventListener('change', () => alternar(tarea.id));
+
+        const etiqueta = document.createElement('label');
+        etiqueta.htmlFor = casilla.id;
+        etiqueta.textContent = tarea.texto;
+
+        const borrar = document.createElement('button');
+        borrar.className = 'borrar';
+        borrar.type = 'button';
+        borrar.textContent = '✕';
+        borrar.title = 'Borrar tarea';
+        borrar.setAttribute('aria-label', 'Borrar «' + tarea.texto + '»');
+        borrar.addEventListener('click', () => eliminar(tarea.id));
+
+        li.append(casilla, etiqueta, borrar);
+        lista.appendChild(li);
+      }
+
+      const total = tareas.length;
+      const pendientes = tareas.filter(t => !t.hecha).length;
+      vacio.hidden = visibles.length > 0;
+      vacio.textContent = total === 0
+        ? 'No hay tareas. ¡Añade la primera!'
+        : `No hay tareas ${filtro}.`;
+
+      filtros.hidden = total === 0;
+      for (const boton of filtros.querySelectorAll('button[data-filtro]')) {
+        boton.setAttribute('aria-pressed', String(boton.dataset.filtro === filtro));
+      }
+
+      resumen.textContent = total === 0
+        ? 'Tu lista está vacía'
+        : `${pendientes} pendiente${pendientes === 1 ? '' : 's'} de ${total}`;
+    }
+
+    function anadir(texto) {
+      tareas.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), texto, hecha: false });
+      guardar();
+      render();
+    }
+
+    function alternar(id) {
+      const tarea = tareas.find(t => t.id === id);
+      if (tarea) tarea.hecha = !tarea.hecha;
+      guardar();
+      render();
+    }
+
+    function eliminar(id) {
+      tareas = tareas.filter(t => t.id !== id);
+      guardar();
+      render();
+    }
+
+    formulario.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const texto = entrada.value.trim();
+      if (!texto) return;
+      anadir(texto);
+      entrada.value = '';
+      entrada.focus();
+    });
+
+    filtros.addEventListener('click', (e) => {
+      const boton = e.target.closest('button[data-filtro]');
+      if (!boton) return;
+      filtro = boton.dataset.filtro;
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
